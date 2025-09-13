@@ -4,37 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai chat Bot</title>
+    <title>AI Chat Bot</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="chat-container">
-
         <div class="ai-chat-box">
-            <img src="ai.png" alt="" id="aiImage" , width="5%">
+            <img src="ai.png" alt="AI" id="aiImage" width="7%">
             <div class="ai-chat-area">
                 Hello, I am your AI assistant. How can I help you today?
-
             </div>
             <img src="" alt="" class="load" width="50px">
-
         </div>
-
     </div>
+
     <div class="prompt-area">
         <input type="text" id="prompt" placeholder="Type your message here...">
-        <button id="image"><img src="img.svg" alt="">
+
+        <!-- 🎙️ Mic button -->
+        <button id="mic">
+            <img src="mic.svg" alt="Mic" width = 20>
+        </button>
+
+        <!-- 📷 Image button -->
+        <button id="image">
+            <img src="img.svg" alt="Image">
             <input type="file" accept="image/*" hidden>
         </button>
-        <button id="submit"><img src="submit.svg" alt=""></button>
 
-
+        <!-- ⬆️ Submit button -->
+        <button id="submit">
+            <img src="submit.svg" alt="Send">
+        </button>
     </div>
 
     <script src="script.js"></script>
-
-
 </body>
 
 </html>
