@@ -4,6 +4,40 @@ let chatContainer = document.querySelector(".chat-container");
 let imagebutton = document.querySelector("#image");
 let image = document.querySelector("#image img");
 let imageinput = document.querySelector("#image input");
+let micbutton = document.querySelector("#mic");
+
+
+let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = new SpeechRecognition();
+
+recognition.continuous = false;
+recognition.interimResults = false;
+recognition.lang = "en-US"; // Hindi ke liye "hi-IN" kar sakta hai
+
+// 🎙️ Mic button click listener
+micbutton.addEventListener("click", () => {
+    recognition.start();
+    console.log("🎤 Listening...");
+});
+
+// 🎙️ Jab speech complete ho
+recognition.onresult = (event) => {
+    let transcript = event.results[0][0].transcript;
+    console.log("You said:", transcript);
+
+    // ✅ Sirf input box me set karna (bhejna nahi)
+    prompt.value = transcript;
+};
+
+// 🎙️ Error handling
+recognition.onerror = (err) => {
+    console.log("Speech recognition error:", err);
+};
+
+
+
+
+
 
 const API_KEY = "AIzaSyA7qqJUGYNX91hfE1ql_s7jxBlQOt03GcE"; // apna key yaha
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
