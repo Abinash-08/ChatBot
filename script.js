@@ -17,20 +17,22 @@ let user = {
 };
 
 // ✅ API se AI response lana
-async function generateResponse(aiChatBox,) {
-
+async function generateResponse(aiChatBox) {
     let text = aiChatBox.querySelector(".ai-chat-area");
+
     let RequestOption = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             contents: [
                 {
-                    "parts": [{ "text": user.message }, (user.file.data ?
-                        [{ "inline_data": user.file }] : [])
-
+                    "parts": [
+                        {
+                            "text": user.message + "\n(Please give response in short, max 9-10 lines)"
+                        },
+                        ...(user.file.data ? [{ "inline_data": user.file }] : [])
                     ]
-                },
+                }
             ],
         }),
     };
@@ -38,21 +40,25 @@ async function generateResponse(aiChatBox,) {
     try {
         let response = await fetch(API_URL, RequestOption);
         let data = await response.json();
-        let apiResponse = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1").trim();
+
+        let apiResponse = data.candidates[0].content.parts[0].text
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .trim();
+
+        // ✅ Agar text bohot bada hai toh cut kardo
+        if (apiResponse.length > 400) {
+            apiResponse = apiResponse.substring(0, 400) + "...";
+        }
+
         text.innerHTML = apiResponse;
-
-
-    }
-    catch (error) {
+    } catch (error) {
         console.log("Error:", error);
-
-    }
-
-    finally {
+        text.innerHTML = "⚠️ Sorry, I couldn't process that request. Try again.";
+    } finally {
         chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-        image.src = `img.svg`
+        image.src = `img.svg`;
         image.classList.remove("choose");
-        user.file = {}
+        user.file = {};
     }
 }
 
@@ -66,14 +72,17 @@ function createChatBox(html, classes) {
 
 // ✅ User message handle karna
 function handlechatResponse(userMessage) {
+    if (!userMessage.trim() && !user.file.data) return; // empty input ignore
+
     user.message = userMessage;
+
     let html = `<img src="user.png" alt="" id="userImage" width="7%">
       <div class="user-chat-area">
       ${user.message}
-      ${user.file.data ? `<img src="data:${user.file.mime_type};base64,${user.file.data}" class ="chooseimg" />` : ""}
+      ${user.file.data ? `<img src="data:${user.file.mime_type};base64,${user.file.data}" class="chooseimg" />` : ""}
       </div>`;
 
-    prompt.value = ""
+    prompt.value = "";
 
     let userChatBox = createChatBox(html, "user-chat-box");
     chatContainer.appendChild(userChatBox);
@@ -92,37 +101,34 @@ function handlechatResponse(userMessage) {
     }, 600);
 }
 
-// ✅ Enter key press listener (function ke bahar hona chahiye tha)
+// ✅ Enter key press listener
 prompt.addEventListener("keydown", (e) => {
-    if (e.key == "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
         handlechatResponse(prompt.value);
     }
 });
 
 submitbutton.addEventListener("click", () => {
     handlechatResponse(prompt.value);
-
 });
 
 imageinput.addEventListener("change", () => {
     const file = imageinput.files[0];
     if (!file) return;
-    let reader = new FileReader()
+    let reader = new FileReader();
     reader.onload = (e) => {
         let base64String = e.target.result.split(',')[1];
         user.file = {
             mime_type: file.type,
             data: base64String
-        }
-        image.src = `data:${user.file.mime_type};base64,${user.file.data}`
+        };
+        image.src = `data:${user.file.mime_type};base64,${user.file.data}`;
         image.classList.add("choose");
-    }
-
+    };
     reader.readAsDataURL(file);
-})
-
+});
 
 imagebutton.addEventListener("click", () => {
     imagebutton.querySelector("input").click();
-
-})
+});
