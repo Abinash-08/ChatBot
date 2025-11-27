@@ -5,38 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chat Bot</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="chat-container">
-        <div class="ai-chat-box">
-            <img src="ai.png" alt="AI" id="aiImage" width="7%">
-            <div class="ai-chat-area">
-                Hello, I am your AI assistant. How can I help you today?
+
+    <div class="main-wrapper">
+
+        <!-- Header -->
+        <header class="header">
+            <img src="ai.png" width="40" class="logo">
+            <h2>AI Chat Assistant</h2>
+        </header>
+
+        <!-- Chat Section -->
+        <div class="chat-container" id="chatContainer">
+
+            <div class="ai-chat-box">
+                <img src="ai.png" alt="AI" class="ai-icon">
+
+                <div class="ai-chat-area">
+                    Hello 👋 I am your AI assistant.  
+                    How can I help you today?
+                </div>
+
+                <img src="" class="loading-dots" width="40">
             </div>
-            <img src="" alt="" class="load" width="50px">
+
         </div>
-    </div>
 
-    <div class="prompt-area">
-        <input type="text" id="prompt" placeholder="Type your message here...">
+        <!-- Prompt Area -->
+        <div class="prompt-area">
+            <input type="text" id="prompt" placeholder="Type your message..." autocomplete="off">
 
-        <!-- 🎙️ Mic button -->
-        <button id="mic">
-            <img src="mic.svg" alt="Mic" width = 20>
-        </button>
+            <!-- Mic -->
+            <button class="icon-btn" id="mic">
+                <img src="mic.svg" width="20">
+            </button>
 
-        <!-- 📷 Image button -->
-        <button id="image">
-            <img src="img.svg" alt="Image">
-            <input type="file" accept="image/*" hidden>
-        </button>
+            <!-- Image Upload -->
+            <button class="icon-btn" id="image">
+                <img src="img.svg" width="22">
+                <input type="file" accept="image/*" hidden>
+            </button>
 
-        <!-- ⬆️ Submit button -->
-        <button id="submit">
-            <img src="submit.svg" alt="Send">
-        </button>
+            <!-- Send -->
+            <button class="send-btn" id="submit">
+                <img src="submit.svg" width="22">
+            </button>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
