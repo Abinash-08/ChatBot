@@ -126,6 +126,15 @@ body {
     width: 100%;
     display: flex;
     justify-content: flex-end;
+    gap: 10px;             /* avatar aur bubble ke beech gap */
+    align-items: flex-start;
+}
+
+.user-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .user-chat-area {
@@ -141,12 +150,6 @@ body {
     box-shadow: 0 3px 12px rgba(70,120,255,0.28);
 }
 
-/* Image preview inside chat */
-.chooseimg {
-    margin-top: 8px;
-    width: 120px;
-    border-radius: 12px;
-}
 
 /* --------------------------
    INPUT / FOOTER
