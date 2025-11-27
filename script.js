@@ -129,13 +129,13 @@ async function generateResponse(aiChatBox) {
 // ---------- Handle User Message ----------
 function handleChatResponse(rawMessage) {
   const trimmed = rawMessage.trim();
-
   if (!trimmed && !user.file.data) return;
 
   user.message = trimmed;
 
-  // User bubble
+  // 🧑‍💻 User bubble + avatar
   const userHtml = `
+    <img src="user.png" alt="User" class="user-icon">
     <div class="user-chat-area">
       ${user.message || ""}
       ${
@@ -143,7 +143,8 @@ function handleChatResponse(rawMessage) {
           ? `<img src="data:${user.file.mime_type};base64,${user.file.data}" class="chooseimg" />`
           : ""
       }
-    </div>`;
+    </div>
+  `;
 
   promptInput.value = "";
   const userChatBox = createChatBox(userHtml, "user-chat-box");
@@ -157,13 +158,13 @@ function handleChatResponse(rawMessage) {
       <div class="ai-chat-area">
         <span class="loading-dots show-loading"></span>
       </div>`;
-
     const aiChatBox = createChatBox(aiHtml, "ai-chat-box");
     chatContainer.appendChild(aiChatBox);
     scrollToBottom();
     generateResponse(aiChatBox);
   }, 400);
 }
+
 
 // ---------- Events ----------
 
