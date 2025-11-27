@@ -1,168 +1,201 @@
-let prompt = document.querySelector("#prompt");
-let submitbutton = document.querySelector("#submit");
-let chatContainer = document.querySelector(".chat-container");
-let imagebutton = document.querySelector("#image");
-let image = document.querySelector("#image img");
-let imageinput = document.querySelector("#image input");
-let micbutton = document.querySelector("#mic");
+// ---------- DOM Elements ----------
+const promptInput   = document.querySelector("#prompt");
+const submitButton  = document.querySelector("#submit");
+const chatContainer = document.querySelector(".chat-container");
+const imageButton   = document.querySelector("#image");
+const imageThumb    = document.querySelector("#image img");
+const imageInput    = document.querySelector("#image input");
+const micButton     = document.querySelector("#mic");
 
+// ---------- Speech Recognition ----------
+let SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
-let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = new SpeechRecognition();
+let recognition = null;
 
-recognition.continuous = false;
-recognition.interimResults = false;
-recognition.lang = "en-US"; // Hindi ke liye "hi-IN" kar sakta hai
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = "en-US"; // Hindi -> "hi-IN"
 
-// 🎙️ Mic button click listener
-micbutton.addEventListener("click", () => {
+  micButton.addEventListener("click", () => {
     recognition.start();
     console.log("🎤 Listening...");
-});
+  });
 
-// 🎙️ Jab speech complete ho
-recognition.onresult = (event) => {
-    let transcript = event.results[0][0].transcript;
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
     console.log("You said:", transcript);
+    promptInput.value = transcript;
+    promptInput.focus();
+  };
 
-    // ✅ Sirf input box me set karna (bhejna nahi)
-    prompt.value = transcript;
-};
-
-// 🎙️ Error handling
-recognition.onerror = (err) => {
+  recognition.onerror = (err) => {
     console.log("Speech recognition error:", err);
-};
+  };
+} else {
+  // Browser does not support speech
+  micButton.style.opacity = "0.4";
+  micButton.style.cursor = "not-allowed";
+}
+
+// ---------- API Config ----------
+// ---- Gemini config ----
+const API_KEY = "AIzaSyBYgbUy2NWDW3hUFLhRyOdN3b3SKF5aZbI"; // (TEMP) test key
+const MODEL_NAME = "gemini-2.5-flash";
+
+const API_URL =
+  `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
 
-
-
-
-
-const API_KEY = "AIzaSyA7qqJUGYNX91hfE1ql_s7jxBlQOt03GcE"; // apna key yaha
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
 let user = {
-    message: null,
-    file: {
-        mime_type: null,
-        data: null
-    }
+  message: null,
+  file: { mime_type: null, data: null },
 };
 
-// ✅ API se AI response lana
+// ---------- Scroll Helper ----------
+function scrollToBottom() {
+  chatContainer.scrollTo({
+    top: chatContainer.scrollHeight,
+    behavior: "smooth",
+  });
+}
+
+// ---------- Create Chat Bubble ----------
+function createChatBox(innerHTML, classes) {
+  const div = document.createElement("div");
+  div.innerHTML = innerHTML;
+  div.classList.add(classes);
+  return div;
+}
+
+// ---------- Generate AI Response ----------
 async function generateResponse(aiChatBox) {
-    let text = aiChatBox.querySelector(".ai-chat-area");
+  const text = aiChatBox.querySelector(".ai-chat-area");
 
-    let RequestOption = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            contents: [
-                {
-                    "parts": [
-                        {
-                            "text": user.message + "\n(Please give response in short, max 9-10 lines)"
-                        },
-                        ...(user.file.data ? [{ "inline_data": user.file }] : [])
-                    ]
-                }
-            ],
-        }),
-    };
+  const body = {
+    contents: [
+      {
+        parts: [
+          {
+            text:
+              (user.message || "") +
+              "\n(Please keep response short, max 9-10 lines)",
+          },
+          ...(user.file?.data ? [{ inline_data: user.file }] : []),
+        ],
+      },
+    ],
+  };
 
-    try {
-        let response = await fetch(API_URL, RequestOption);
-        let data = await response.json();
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
 
-        let apiResponse = data.candidates[0].content.parts[0].text
-            .replace(/\*\*(.*?)\*\*/g, "$1")
-            .trim();
+    const data = await response.json();
+    console.log("🔍 Raw response:", data);
 
-        // ✅ Agar text bohot bada hai toh cut kardo
-        if (apiResponse.length > 400) {
-            apiResponse = apiResponse.substring(0, 400) + "...";
-        }
-
-        text.innerHTML = apiResponse;
-    } catch (error) {
-        console.log("Error:", error);
-        text.innerHTML = "⚠️ Sorry, I couldn't process that request. Try again.";
-    } finally {
-        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-        image.src = `img.svg`;
-        image.classList.remove("choose");
-        user.file = {};
+    // If API returned an error object
+    if (!response.ok || data.error) {
+      console.error("❌ Gemini API error:", data.error || response.statusText);
+      throw new Error(data.error?.message || "Request failed");
     }
+
+    let apiResponse =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "⚠️ No response received from AI.";
+
+    apiResponse = apiResponse.replace(/\*\*(.*?)\*\*/g, "$1").trim();
+    if (apiResponse.length > 400) apiResponse = apiResponse.slice(0, 400) + "...";
+
+    text.innerHTML = apiResponse;
+  } catch (err) {
+    console.error("❌ Fetch error:", err);
+    text.innerHTML = "⚠️ Sorry, I couldn't process that request. Try again.";
+  } finally {
+    chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: "smooth" });
+    imageThumb.src = "img.svg";
+    imageThumb.classList.remove("choose");
+    user.file = {};
+  }
 }
 
-// ✅ Chat box create karna
-function createChatBox(html, classes) {
-    let div = document.createElement("div");
-    div.innerHTML = html;
-    div.classList.add(classes);
-    return div;
-}
 
-// ✅ User message handle karna
-function handlechatResponse(userMessage) {
-    if (!userMessage.trim() && !user.file.data) return; // empty input ignore
+// ---------- Handle User Message ----------
+function handleChatResponse(rawMessage) {
+  const trimmed = rawMessage.trim();
 
-    user.message = userMessage;
+  if (!trimmed && !user.file.data) return;
 
-    let html = `<img src="user.png" alt="" id="userImage" width="7%">
-      <div class="user-chat-area">
-      ${user.message}
-      ${user.file.data ? `<img src="data:${user.file.mime_type};base64,${user.file.data}" class="chooseimg" />` : ""}
+  user.message = trimmed;
+
+  // User bubble
+  const userHtml = `
+    <div class="user-chat-area">
+      ${user.message || ""}
+      ${
+        user.file.data
+          ? `<img src="data:${user.file.mime_type};base64,${user.file.data}" class="chooseimg" />`
+          : ""
+      }
+    </div>`;
+
+  promptInput.value = "";
+  const userChatBox = createChatBox(userHtml, "user-chat-box");
+  chatContainer.appendChild(userChatBox);
+  scrollToBottom();
+
+  // AI loading bubble
+  setTimeout(() => {
+    const aiHtml = `
+      <img src="ai.png" alt="AI" class="ai-icon">
+      <div class="ai-chat-area">
+        <span class="loading-dots show-loading"></span>
       </div>`;
 
-    prompt.value = "";
-
-    let userChatBox = createChatBox(html, "user-chat-box");
-    chatContainer.appendChild(userChatBox);
-
-    chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-
-    // Loading ke baad AI ka reply
-    setTimeout(() => {
-        let html = `<img src="ai.png" alt="" id="aiImage" width="10%">
-        <div class="ai-chat-area">
-          <img src="load-32.gif" alt="" class="load" width="50px">
-        </div>`;
-        let aiChatBox = createChatBox(html, "ai-chat-box");
-        chatContainer.appendChild(aiChatBox);
-        generateResponse(aiChatBox);
-    }, 600);
+    const aiChatBox = createChatBox(aiHtml, "ai-chat-box");
+    chatContainer.appendChild(aiChatBox);
+    scrollToBottom();
+    generateResponse(aiChatBox);
+  }, 400);
 }
 
-// ✅ Enter key press listener
-prompt.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handlechatResponse(prompt.value);
-    }
+// ---------- Events ----------
+
+// Enter to send
+promptInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleChatResponse(promptInput.value);
+  }
 });
 
-submitbutton.addEventListener("click", () => {
-    handlechatResponse(prompt.value);
+// Send button
+submitButton.addEventListener("click", () => {
+  handleChatResponse(promptInput.value);
 });
 
-imageinput.addEventListener("change", () => {
-    const file = imageinput.files[0];
-    if (!file) return;
-    let reader = new FileReader();
-    reader.onload = (e) => {
-        let base64String = e.target.result.split(',')[1];
-        user.file = {
-            mime_type: file.type,
-            data: base64String
-        };
-        image.src = `data:${user.file.mime_type};base64,${user.file.data}`;
-        image.classList.add("choose");
-    };
-    reader.readAsDataURL(file);
+// Image upload
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64String = e.target.result.split(",")[1];
+    user.file = { mime_type: file.type, data: base64String };
+    imageThumb.src = `data:${user.file.mime_type};base64,${user.file.data}`;
+    imageThumb.classList.add("choose");
+  };
+  reader.readAsDataURL(file);
 });
 
-imagebutton.addEventListener("click", () => {
-    imagebutton.querySelector("input").click();
+// Click on image button → open file picker
+imageButton.addEventListener("click", () => {
+  imageButton.querySelector("input").click();
 });
