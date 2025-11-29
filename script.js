@@ -42,7 +42,7 @@ if (SpeechRecognition) {
 
 // ---------- API Config ----------
 // ---- Gemini config ----
-const API_KEY = "AIzaSyBYgbUy2NWDW3hUFLhRyOdN3b3SKF5aZbI"; // (TEMP) test key
+const API_KEY = "AIzaSyAq3oxAkV8mfaab8-ZQx6e_1uZWm7vepoc"; // (TEMP) test key
 const MODEL_NAME = "gemini-2.5-flash";
 
 const API_URL =
